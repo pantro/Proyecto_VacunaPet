@@ -1,7 +1,7 @@
-import 'dart:async';
+// lib/screens/puntos_moviles_screen.dart
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-import '../graphql/graphql_config.dart'; // asegúrate de tener graphQLClient
+import '../graphql/graphql_config.dart';
 import '../graphql/location_subscription.dart';
 
 class PuntosMovilesScreen extends StatefulWidget {
@@ -12,87 +12,60 @@ class PuntosMovilesScreen extends StatefulWidget {
 
 class _PuntosMovilesScreenState extends State<PuntosMovilesScreen> {
   late GoogleMapController _mapController;
-  final Set<Marker> _markers = {};
+  final Map<String, Marker> _userMarkers = {};
   final Set<Polyline> _polylines = {};
-  late BitmapDescriptor _autoIcon;
-  
-
-  // Tus puntos fijos
+  final String currentUserId = "usuario123"; // ← cambia esto por tu lógica real
   final List<LatLng> _stops = [
     LatLng(-16.418406, -71.475417),
     LatLng(-16.407764, -71.478325),
-    //LatLng(-16.413690, -71.494548),
-    //LatLng(-16.410015, -71.495162),
-    //LatLng(-16.406820, -71.504452),
-    //LatLng(-16.413021, -71.501057),
   ];
-
-  late LatLng _autoPos;
 
   @override
   void initState() {
     super.initState();
-    _autoPos = _stops[0];
-
-    //_loadAutoIcon().then((_) {
-    _updateMarkers();
-
-    int markerCount = 0; // contador para IDs únicos
+    _updateFixedMarkers();
 
     LocationSubscriptionManager(
       client: graphQLClient.value,
-      onLocationUpdate: (lat, lng) {
-        final newMarker = Marker(
-          markerId: MarkerId('dynamic_${markerCount++}'),
+      onLocationUpdate: (userId, lat, lng) {
+        final isCurrentUser = userId == currentUserId;
+        final marker = Marker(
+          markerId: MarkerId(userId),
           position: LatLng(lat, lng),
-          infoWindow: InfoWindow(title: 'Ubicación #$markerCount'),
-          icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueAzure),
+          infoWindow: InfoWindow(title: isCurrentUser ? 'Mi ubicación' : 'Usuario $userId'),
+          icon: BitmapDescriptor.defaultMarkerWithHue(
+            isCurrentUser ? BitmapDescriptor.hueRed : BitmapDescriptor.hueBlue,
+          ),
         );
 
         setState(() {
-          _markers.add(newMarker);
-          _mapController.animateCamera(CameraUpdate.newLatLng(newMarker.position));
+          _userMarkers[userId] = marker;
         });
 
-        print('🟢 Nuevo marcador agregado en: $lat, $lng');
+        if (isCurrentUser) {
+          _mapController.animateCamera(CameraUpdate.newLatLng(marker.position));
+        }
+
+        print('🟢 [$userId] Nueva ubicación: $lat, $lng');
       },
     ).start();
-    //});
   }
 
-  Future<void> _loadAutoIcon() async {
-    _autoIcon = await BitmapDescriptor.fromAssetImage(
-      const ImageConfiguration(size: Size(32,32)),
-      'assets/images/auto.png',
-    );
-  }
-
-  void _updateMarkers() {
-    final m = <Marker>{
-      // Puntos fijos
-      for (var i = 0; i < _stops.length; i++)
-        Marker(
-          markerId: MarkerId('stop_$i'),
-          position: _stops[i],
-          infoWindow: InfoWindow(title: 'Punto Fijo ${i+1}'),
-        ),
-      // Auto
-      /*Marker(
-        markerId: const MarkerId('auto'),
-        position: _autoPos,
-        icon: _autoIcon,
-      ),*/
-    };
-    setState(() {
-      _markers
-        ..clear()
-        ..addAll(m);
-    });
+  void _updateFixedMarkers() {
+    for (var i = 0; i < _stops.length; i++) {
+      final marker = Marker(
+        markerId: MarkerId('stop_$i'),
+        position: _stops[i],
+        infoWindow: InfoWindow(title: 'Punto Fijo ${i + 1}'),
+        icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueGreen),
+      );
+      _userMarkers['stop_$i'] = marker;
+    }
   }
 
   void _onMapCreated(GoogleMapController c) {
     _mapController = c;
-    _updateMarkers();
+    setState(() {}); // Para refrescar marcadores
   }
 
   @override
@@ -102,14 +75,17 @@ class _PuntosMovilesScreenState extends State<PuntosMovilesScreen> {
       body: GoogleMap(
         onMapCreated: _onMapCreated,
         initialCameraPosition: CameraPosition(target: _stops[0], zoom: 14),
-        markers: _markers,
+        markers: _userMarkers.values.toSet(),
         polylines: _polylines,
         myLocationEnabled: true,
       ),
       floatingActionButton: FloatingActionButton(
-        child: Icon(Icons.gps_fixed),
+        child: const Icon(Icons.gps_fixed),
         onPressed: () {
-          _mapController.animateCamera(CameraUpdate.newLatLng(_autoPos));
+          final marker = _userMarkers[currentUserId];
+          if (marker != null) {
+            _mapController.animateCamera(CameraUpdate.newLatLng(marker.position));
+          }
         },
       ),
     );

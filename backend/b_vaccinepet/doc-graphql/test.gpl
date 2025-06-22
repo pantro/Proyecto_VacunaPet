@@ -4,7 +4,8 @@
 
 # Se deja escuchando:
 subscription {
-  locationUpdated(userId: "usuario123") {
+  locationUpdated {
+    userId
     latitude
     longitude
     timestamp
@@ -13,7 +14,7 @@ subscription {
 
 # En otra ventana:
 mutation {
-  createLocation(userId: "usuario123", latitude: -16.4, longitude: -71.5) {
+  createLocation(userId: "usuario123", latitude: -16.413021, longitude: -71.501057) {
     id
     timestamp
   }

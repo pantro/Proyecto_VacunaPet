@@ -25,5 +25,5 @@ type Mutation {
 }
 
 type Subscription {
-  locationUpdated(userId: String!): Location!
+  locationUpdated: Location!
 }

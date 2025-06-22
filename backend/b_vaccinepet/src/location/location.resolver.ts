@@ -34,13 +34,9 @@ export class LocationResolver {
   }
 
   @Subscription(() => Location, {
-    filter: (payload, variables) => {
-      console.log('📥 Subscription filter llamada');
-      return payload.locationUpdated.userId === variables.userId;
-    },
   })
-  locationUpdated(@Args('userId') userId: string) {
-    console.log('🧲 Cliente suscrito al userId:', userId);
+  locationUpdated() {
+    console.log('🧲 Cliente suscrito');
     return pubSub.asyncIterator('locationUpdated');
   }
 
