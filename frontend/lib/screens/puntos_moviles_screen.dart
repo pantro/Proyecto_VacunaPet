@@ -1,5 +1,6 @@
 // lib/screens/puntos_moviles_screen.dart
 import 'package:flutter/material.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import '../graphql/graphql_config.dart';
 import '../graphql/location_subscription.dart';
@@ -23,6 +24,7 @@ class _PuntosMovilesScreenState extends State<PuntosMovilesScreen> {
   @override
   void initState() {
     super.initState();
+    _setupInitialPosition();
     _updateFixedMarkers();
 
     LocationSubscriptionManager(
@@ -50,6 +52,47 @@ class _PuntosMovilesScreenState extends State<PuntosMovilesScreen> {
       },
     ).start();
   }
+
+  Future<void> _setupInitialPosition() async {
+    print("**********************************************************************************");
+    print("entro aquiiiiiiiiiiiiiiiiiiiiiiiiii");
+    print("**********************************************************************************");
+    bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+    if (!serviceEnabled) {
+      print('🛑 El GPS está desactivado.');
+      return;
+    }
+
+    LocationPermission permission = await Geolocator.checkPermission();
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
+      if (permission == LocationPermission.denied) {
+        print('🛑 Permiso de ubicación denegado.');
+        return;
+      }
+    }
+
+    if (permission == LocationPermission.deniedForever) {
+      print('🛑 Permiso de ubicación denegado permanentemente.');
+      return;
+    }
+
+    final pos = await Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.high);
+    final myMarker = Marker(
+      markerId: MarkerId(currentUserId),
+      position: LatLng(pos.latitude, pos.longitude),
+      infoWindow: InfoWindow(title: 'Mi posición inicial'),
+      icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueRed),
+    );
+
+    setState(() {
+      _userMarkers[currentUserId] = myMarker;
+    });
+
+    // Centra el mapa en tu posición
+    _mapController.animateCamera(CameraUpdate.newLatLng(myMarker.position));
+  }
+
 
   void _updateFixedMarkers() {
     for (var i = 0; i < _stops.length; i++) {
