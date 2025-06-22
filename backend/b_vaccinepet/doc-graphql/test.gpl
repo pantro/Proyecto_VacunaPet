@@ -1,0 +1,20 @@
+#------------------------------
+# Para probar si mi backend funciona
+#-----------------------------------
+
+# Se deja escuchando:
+subscription {
+  locationUpdated(userId: "usuario123") {
+    latitude
+    longitude
+    timestamp
+  }
+}
+
+# En otra ventana:
+mutation {
+  createLocation(userId: "usuario123", latitude: -16.4, longitude: -71.5) {
+    id
+    timestamp
+  }
+}

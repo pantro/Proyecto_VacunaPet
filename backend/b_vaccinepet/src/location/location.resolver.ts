@@ -18,15 +18,29 @@ export class LocationResolver {
     @Args('latitude') latitude: number,
     @Args('longitude') longitude: number,
   ) {
-    const location = await this.locationService.create({ userId, latitude, longitude });
-    pubSub.publish('locationUpdated', { locationUpdated: location });
-    return location;
+    const newLocation = await this.locationService.create({
+      userId,
+      latitude,
+      longitude,
+    });
+  
+    console.log('📡 Publicando ubicación para', userId);
+  
+    await pubSub.publish('locationUpdated', {
+      locationUpdated: newLocation,
+    });
+  
+    return newLocation;
   }
 
   @Subscription(() => Location, {
-    filter: (payload, variables) => payload.locationUpdated.userId === variables.userId,
+    filter: (payload, variables) => {
+      console.log('📥 Subscription filter llamada');
+      return payload.locationUpdated.userId === variables.userId;
+    },
   })
   locationUpdated(@Args('userId') userId: string) {
+    console.log('🧲 Cliente suscrito al userId:', userId);
     return pubSub.asyncIterator('locationUpdated');
   }
 

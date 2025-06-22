@@ -15,6 +15,7 @@ import { PrismaModule } from './prisma/prisma.module';
       installSubscriptionHandlers: true, // opcional en v10, útil si usas subscriptions por WebSocket
       subscriptions: {
         'graphql-ws': true,   // activa graphql-ws (versión moderna)
+        'subscriptions-transport-ws': true,
       },
     }),
     PrismaModule,
