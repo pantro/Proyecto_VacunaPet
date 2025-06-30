@@ -1,4 +1,11 @@
 import { Injectable } from '@nestjs/common';
+
+@Injectable()
+export class LocationService {
+}
+
+/*
+import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { Location } from '@prisma/client';
 
@@ -29,3 +36,4 @@ export class LocationService {
     });
   }
 }
+*/
