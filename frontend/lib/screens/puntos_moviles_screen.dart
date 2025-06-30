@@ -1,9 +1,13 @@
 // lib/screens/puntos_moviles_screen.dart
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:vacunapet/graphql/location_send_mutation.dart';
 import '../graphql/graphql_config.dart';
 import '../graphql/location_subscription.dart';
+import '../services/device_id_service.dart';
 
 class PuntosMovilesScreen extends StatefulWidget {
   const PuntosMovilesScreen({super.key});
@@ -15,7 +19,7 @@ class _PuntosMovilesScreenState extends State<PuntosMovilesScreen> {
   late GoogleMapController _mapController;
   final Map<String, Marker> _userMarkers = {};
   final Set<Polyline> _polylines = {};
-  final String currentUserId = "usuario123"; // ← cambia esto por tu lógica real
+  late String currentUserId;
   final List<LatLng> _stops = [
     LatLng(-16.418406, -71.475417),
     LatLng(-16.407764, -71.478325),
@@ -24,6 +28,11 @@ class _PuntosMovilesScreenState extends State<PuntosMovilesScreen> {
   @override
   void initState() {
     super.initState();
+    _initializeTracking();
+  }
+
+  Future<void> _initializeTracking() async {
+    currentUserId = await getOrCreateUserId(); // obtiene el ID único del dispositivo
     _setupInitialPosition();
     _updateFixedMarkers();
 
@@ -51,7 +60,26 @@ class _PuntosMovilesScreenState extends State<PuntosMovilesScreen> {
         print('🟢 [$userId] Nueva ubicación: $lat, $lng');
       },
     ).start();
+
+    _startSendingLocation();
   }
+
+  void _startSendingLocation() {
+    Timer.periodic(const Duration(seconds: 60), (_) async {
+      try {
+        final pos = await Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.high);
+        await sendLocation(
+          graphQLClient.value,
+          currentUserId,
+          pos.latitude,
+          pos.longitude,
+        );
+      } catch (e) {
+        print('⚠️ Error obteniendo posición para enviar: $e');
+      }
+    });
+  }
+
 
   Future<void> _setupInitialPosition() async {
     print("**********************************************************************************");

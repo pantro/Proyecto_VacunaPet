@@ -39,7 +39,7 @@ android/local.properties
 
 # GraphQL (generated files)
 lib/**/__generated__/
-lib/**/graphql/**
+
 *.graphql.dart
 *.graphql.g.dart
 *.graphql.json

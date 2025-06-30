@@ -21,7 +21,13 @@ type Query {
 }
 
 type Mutation {
-  createLocation(userId: String!, latitude: Float!, longitude: Float!): Location!
+  createLocation(input: CreateLocationInput!): Location!
+}
+
+input CreateLocationInput {
+  userId: String!
+  latitude: Float!
+  longitude: Float!
 }
 
 type Subscription {
