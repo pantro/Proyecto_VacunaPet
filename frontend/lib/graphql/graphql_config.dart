@@ -1,11 +1,12 @@
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:graphql_flutter/graphql_flutter.dart';
 import 'package:flutter/foundation.dart';
 
 
-final httpLink = HttpLink('http://10.0.2.2:3000/graphql');
+final httpLink = HttpLink(dotenv.env['GRAPHQL_HTTP_URL']!);
 
 final wsLink = WebSocketLink(
-  'ws://10.0.2.2:3000/graphql',
+  dotenv.env['GRAPHQL_WS_URL']!,
   config: SocketClientConfig(
     autoReconnect: true,
     inactivityTimeout: Duration(minutes: 10),
